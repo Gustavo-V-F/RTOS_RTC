@@ -67,6 +67,8 @@
 /* It's up to user to redefine and/or remove those define */
 #define APP_RX_DATA_SIZE  1000
 #define APP_TX_DATA_SIZE  1000
+#define START_OF_TEXT 0x02
+#define END_OF_TEXT 0x03
 #define DEBUG
 /* USER CODE END PRIVATE_DEFINES */
 
@@ -266,29 +268,53 @@ static int8_t CDC_Receive_FS(uint8_t* Buf, uint32_t *Len)
   /* USER CODE BEGIN 6 */
 
   static uint32_t ulLenght = 1;
-  uint32_t ulCount;
+  static uint32_t ulCount = 0;
 
   USBD_CDC_SetRxBuffer(&hUsbDeviceFS, &Buf[0]);
   USBD_CDC_ReceivePacket(&hUsbDeviceFS);
 
-  if(*Len == 1)
-    UserRxBufferFS[ulLenght] = Buf[0];
-  else if((*Len > 1) && (*Len < 5))
+  if(*Len > 1)
   {
-    for(ulCount = *Len; ulCount >= 0; ulCount--)
-      UserRxBufferFS[(*Len+1)-ulCount] = Buf[ulCount];
-  }
-
-  if((Buf[0] == '\n') || (Buf[0] == '\0') || ((*Len > 1) && (*Len < 5)))
-  {
-    UserRxBufferFS[ulLenght] = '\0';
     #ifdef DEBUG
-      if(Buf[0] == '\n')
-        printf("\r\n%u\t%s", (unsigned) ulLenght, (char *) &UserRxBufferFS[1]);
+      printf("\r\nWarning: input only supports characters!\r\n\tInput data will be discarded.", (APP_RX_DATA_SIZE-2));    
     #endif
-    ulLenght = 1;
-  }else if(*Len == 1)
-    ulLenght += *Len;
+    Buf[0] = END_OF_TEXT;
+  }
+  else if(ulCount > APP_RX_DATA_SIZE-3)
+  {
+    #ifdef DEBUG
+      printf("\r\nWarning: input over %u bytes not supported!\r\n\tInput data will be truncated.", (APP_RX_DATA_SIZE-2));    
+    #endif
+    ulLenght = 999;
+    ulCount = 997;
+    Buf[ulLenght] = END_OF_TEXT;
+  }else
+  {
+    if((Buf[0] != '\n') || ((Buf[0] == '\n') && (Buf[ulLenght-1] == '\\')))
+    {
+      if(*Len == 1)
+        Buf[ulLenght] = Buf[0];
+    } 
+    
+    if((Buf[0] == '\n') && (Buf[ulLenght-1] != '\\'))
+    {
+      #ifdef DEBUG
+        Buf[ulLenght] = '\0';
+        printf("\r\n%u\t%s", (unsigned) ulLenght, (char *) &Buf[1]);
+      #endif
+
+      Buf[0] = START_OF_TEXT;
+      Buf[ulLenght] = END_OF_TEXT;
+      ulLenght = 1-*Len;
+      ulCount = -*Len;
+    }
+    
+    if(*Len == 1)
+    {
+      ulLenght += *Len;
+      ulCount += *Len; 
+    }
+  }
 
   return (USBD_OK);
   /* USER CODE END 6 */
