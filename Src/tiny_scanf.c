@@ -164,7 +164,9 @@ int ts_format_va_list(const char *buf, const char *fmt, va_list va)
 					}else
 					{
 						while ((*buf) && (*buf != s_val) && ((lenght == 0) || (s_pos <= lenght)))
-							arg[s_pos++] = *buf++; 
+							arg[s_pos++] = *buf++;
+						while(*buf != s_val)
+							*buf++; 
 					}
 					arg[s_pos] = '\0';
 				}
@@ -228,7 +230,7 @@ int siscanf(const char *str, const char *fmt, ...)
 int iscanf(const char *fmt, ...)
 {
 	int read_variables = 0;
-	static char *buf;
+	char *buf;
 	va_list va;
 	va_start(va, fmt);
 	_read(1, &buf, 1);
