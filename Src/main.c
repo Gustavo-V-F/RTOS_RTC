@@ -329,15 +329,11 @@ void vStdio_gatekeeper_task(void const * argument)
   /* USER CODE BEGIN vStdio_gatekeeper_task */
   /* Infinite loop */
   static char Teste[12];
-  signed int Teste2;
-  unsigned int Teste3;
-  unsigned int Teste4;
-  char Teste5;
   for(;;)
   {
     osSemaphoreWait(xRx_semaphore_handle, osWaitForever);
-    scanf("%uHe%cl%i %11s %x", &Teste3, &Teste5, &Teste2 , Teste, &Teste4);
-    printf("\r\n%s\r\n%i\r\n%u\r\n%x\r\n%c", Teste, Teste2, Teste3, Teste4, Teste5);
+    scanf("%*[ ]%11s %*[ ]", Teste);
+    printf("\r\n%s", Teste);
   }
   /* USER CODE END vStdio_gatekeeper_task */
 }

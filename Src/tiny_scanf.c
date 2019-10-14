@@ -141,15 +141,26 @@ int ts_format_va_list(const char *buf, const char *fmt, va_list va)
 					{
 						i_valn *= -1;
 						buf++;
-					} 
+					}
 					if(*buf != '\0')
 						*i_val = ts_atoi(&buf, 10)*i_valn;
 				}
 				break;
 			#ifdef __GNUC__
 			case '0' ... '9': /* Exclusive to the GNU C compiler */
-					lenght = ts_atoi(&fmt, 10) - 1;
+			#else
+			case '0':
+			case '1':
+			case '2':
+			case '3':
+			case '4':
+			case '5':
+			case '6':
+			case '7':
+			case '8':
+			case '9':
 			#endif
+				lenght = ts_atoi(&fmt, 10) - 1;
 			case 's':
 				{
 					char *arg = va_arg(va, char *);
@@ -166,28 +177,39 @@ int ts_format_va_list(const char *buf, const char *fmt, va_list va)
 						while ((*buf) && (*buf != s_val) && ((lenght == 0) || (s_pos <= lenght)))
 							arg[s_pos++] = *buf++;
 						while(*buf != s_val)
-							*buf++; 
+							*buf++;
 					}
 					arg[s_pos] = '\0';
 				}
 				break;
-			  case 'u':
+			case 'u':
 				{
 					unsigned int *u_val = va_arg(va, unsigned int*);
 					if(*buf != '\0')
 						*u_val = ts_atoi(&buf, 10);
 				}	
 				break;
-			  case 'x':
-			  case 'X':
+			case 'x':
+			case 'X':
 			  	{
 					unsigned int *x_val = va_arg(va, unsigned int*);
 					if(*buf != '\0')	
 						*x_val = ts_atoi(&buf, 16);
 			  	}
 				break;
-			  case '%':
-				  break;
+			case '*':
+				{
+					*fmt++;
+					if(*fmt++ == '[')
+					{
+						while(*buf == *fmt)
+							*buf++;
+						*fmt++;
+					}
+					read_val--;
+				}
+			case '%':
+				break;
 			}
 			fmt++;
 			read_val++;

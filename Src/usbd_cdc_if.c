@@ -23,7 +23,7 @@
 #include "usbd_cdc_if.h"
 
 /* USER CODE BEGIN INCLUDE */
-#include "cmsis_os.h"
+
 /* USER CODE END INCLUDE */
 
 /* Private typedef -----------------------------------------------------------*/
@@ -32,7 +32,7 @@
 
 /* USER CODE BEGIN PV */
 /* Private variables ---------------------------------------------------------*/
-
+static uint32_t ulUSBD_received_flag;
 /* USER CODE END PV */
 
 /** @addtogroup STM32_USB_OTG_DEVICE_LIBRARY
@@ -68,7 +68,6 @@
 #define APP_RX_DATA_SIZE  1000
 #define APP_TX_DATA_SIZE  1000
 #define START_OF_TEXT 0x02
-#define END_OF_TEXT 0x03
 #undef DEBUG
 /* USER CODE END PRIVATE_DEFINES */
 
@@ -102,7 +101,7 @@ uint8_t UserRxBufferFS[APP_RX_DATA_SIZE];
 uint8_t UserTxBufferFS[APP_TX_DATA_SIZE];
 
 /* USER CODE BEGIN PRIVATE_VARIABLES */
-extern osSemaphoreId xRx_semaphore_handle;
+
 /* USER CODE END PRIVATE_VARIABLES */
 
 /**
@@ -135,7 +134,7 @@ static int8_t CDC_Control_FS(uint8_t cmd, uint8_t* pbuf, uint16_t length);
 static int8_t CDC_Receive_FS(uint8_t* pbuf, uint32_t *Len);
 
 /* USER CODE BEGIN PRIVATE_FUNCTIONS_DECLARATION */
-
+static void CDC_Set_Rx_Flag(void);
 /* USER CODE END PRIVATE_FUNCTIONS_DECLARATION */
 
 /**
@@ -268,6 +267,7 @@ static int8_t CDC_Receive_FS(uint8_t* Buf, uint32_t *Len)
   /* USER CODE BEGIN 6 */
 
   static uint32_t ulBuffer_lenght = 1;
+  ulUSBD_received_flag = 0;
 
   USBD_CDC_SetRxBuffer(&hUsbDeviceFS, &Buf[0]);
   USBD_CDC_ReceivePacket(&hUsbDeviceFS);
@@ -303,7 +303,7 @@ static int8_t CDC_Receive_FS(uint8_t* Buf, uint32_t *Len)
       Buf[0] = START_OF_TEXT;
       Buf[ulBuffer_lenght] = '\0';
       ulBuffer_lenght = 1-*Len;
-      osSemaphoreRelease(xRx_semaphore_handle);
+      CDC_Set_Rx_Flag();
     }
     
     if(*Len == 1)
@@ -342,6 +342,20 @@ uint8_t CDC_Transmit_FS(uint8_t* Buf, uint16_t Len)
 }
 
 /* USER CODE BEGIN PRIVATE_FUNCTIONS_IMPLEMENTATION */
+void CDC_Clear_Rx_Flag(void)
+{
+  ulUSBD_received_flag = 0;
+}
+
+void CDC_Set_Rx_Flag(void)
+{
+  ulUSBD_received_flag = 1;
+}
+
+uint32_t CDC_Get_Rx_Flag(void)
+{
+  return ulUSBD_received_flag;
+}
 
 /* USER CODE END PRIVATE_FUNCTIONS_IMPLEMENTATION */
 
