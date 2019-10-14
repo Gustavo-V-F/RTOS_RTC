@@ -137,7 +137,7 @@ int main(void)
   Handle_handle = osThreadCreate(osThread(Handle), NULL);
   
   /* definition and creation of Gatekeeper */
-  osThreadDef(Gatekeeper, vStdio_gatekeeper_task, osPriorityHigh, 0, 80);
+  osThreadDef(Gatekeeper, vStdio_gatekeeper_task, osPriorityHigh, 0, 150);
   Gatekeeper_handle = osThreadCreate(osThread(Gatekeeper), NULL);
 
   /* USER CODE BEGIN RTOS_THREADS */
