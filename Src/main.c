@@ -135,9 +135,9 @@ int main(void)
   /* definition and creation of Handle */
   osThreadDef(Handle, vRx_handle_task, osPriorityAboveNormal, 0, 64);
   Handle_handle = osThreadCreate(osThread(Handle), NULL);
-
+  
   /* definition and creation of Gatekeeper */
-  osThreadDef(Gatekeeper, vStdio_gatekeeper_task, osPriorityLow, 0, 80);
+  osThreadDef(Gatekeeper, vStdio_gatekeeper_task, osPriorityHigh, 0, 80);
   Gatekeeper_handle = osThreadCreate(osThread(Gatekeeper), NULL);
 
   /* USER CODE BEGIN RTOS_THREADS */
@@ -328,9 +328,16 @@ void vStdio_gatekeeper_task(void const * argument)
 {
   /* USER CODE BEGIN vStdio_gatekeeper_task */
   /* Infinite loop */
+  static char Teste[12];
+  signed int Teste2;
+  unsigned int Teste3;
+  unsigned int Teste4;
+  char Teste5;
   for(;;)
   {
-    osDelay(1);
+    osSemaphoreWait(xRx_semaphore_handle, osWaitForever);
+    scanf("%uHe%cl%i %11s %x", &Teste3, &Teste5, &Teste2 , Teste, &Teste4);
+    printf("\r\n%s\r\n%i\r\n%u\r\n%x\r\n%c", Teste, Teste2, Teste3, Teste4, Teste5);
   }
   /* USER CODE END vStdio_gatekeeper_task */
 }

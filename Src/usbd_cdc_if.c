@@ -23,7 +23,7 @@
 #include "usbd_cdc_if.h"
 
 /* USER CODE BEGIN INCLUDE */
-
+#include "cmsis_os.h"
 /* USER CODE END INCLUDE */
 
 /* Private typedef -----------------------------------------------------------*/
@@ -69,7 +69,7 @@
 #define APP_TX_DATA_SIZE  1000
 #define START_OF_TEXT 0x02
 #define END_OF_TEXT 0x03
-#define DEBUG
+#undef DEBUG
 /* USER CODE END PRIVATE_DEFINES */
 
 /**
@@ -102,7 +102,7 @@ uint8_t UserRxBufferFS[APP_RX_DATA_SIZE];
 uint8_t UserTxBufferFS[APP_TX_DATA_SIZE];
 
 /* USER CODE BEGIN PRIVATE_VARIABLES */
-
+extern osSemaphoreId xRx_semaphore_handle;
 /* USER CODE END PRIVATE_VARIABLES */
 
 /**
@@ -267,8 +267,7 @@ static int8_t CDC_Receive_FS(uint8_t* Buf, uint32_t *Len)
 {
   /* USER CODE BEGIN 6 */
 
-  static uint32_t ulLenght = 1;
-  static uint32_t ulCount = 0;
+  static uint32_t ulBuffer_lenght = 1;
 
   USBD_CDC_SetRxBuffer(&hUsbDeviceFS, &Buf[0]);
   USBD_CDC_ReceivePacket(&hUsbDeviceFS);
@@ -278,41 +277,38 @@ static int8_t CDC_Receive_FS(uint8_t* Buf, uint32_t *Len)
     #ifdef DEBUG
       printf("\r\nWarning: input only supports characters!\r\n\tInput data will be discarded.", (APP_RX_DATA_SIZE-2));    
     #endif
-    Buf[0] = END_OF_TEXT;
+    Buf[0] = '\0';
   }
-  else if(ulCount > APP_RX_DATA_SIZE-3)
+  else if(ulBuffer_lenght == APP_RX_DATA_SIZE)
   {
     #ifdef DEBUG
       printf("\r\nWarning: input over %u bytes not supported!\r\n\tInput data will be truncated.", (APP_RX_DATA_SIZE-2));    
     #endif
-    ulLenght = 999;
-    ulCount = 997;
-    Buf[ulLenght] = END_OF_TEXT;
+    ulBuffer_lenght = 999;
+    Buf[ulBuffer_lenght] = '\0';
   }else
   {
-    if((Buf[0] != '\n') || ((Buf[0] == '\n') && (Buf[ulLenght-1] == '\\')))
+    if((Buf[0] != '\n') || ((Buf[0] == '\n') && (Buf[ulBuffer_lenght-1] == '\\')))
     {
       if(*Len == 1)
-        Buf[ulLenght] = Buf[0];
+        Buf[ulBuffer_lenght] = Buf[0];
     } 
     
-    if((Buf[0] == '\n') && (Buf[ulLenght-1] != '\\'))
+    if((Buf[0] == '\n') && (Buf[ulBuffer_lenght-1] != '\\'))
     {
       #ifdef DEBUG
-        Buf[ulLenght] = '\0';
-        printf("\r\n%u\t%s", (unsigned) ulLenght, (char *) &Buf[1]);
+        Buf[ulBuffer_lenght] = '\0';
+        printf("\r\n%u\t%s", (unsigned) ulBuffer_lenght, (char *) &Buf[1]);
       #endif
-
       Buf[0] = START_OF_TEXT;
-      Buf[ulLenght] = END_OF_TEXT;
-      ulLenght = 1-*Len;
-      ulCount = -*Len;
+      Buf[ulBuffer_lenght] = '\0';
+      ulBuffer_lenght = 1-*Len;
+      osSemaphoreRelease(xRx_semaphore_handle);
     }
     
     if(*Len == 1)
     {
-      ulLenght += *Len;
-      ulCount += *Len; 
+      ulBuffer_lenght += *Len;
     }
   }
 

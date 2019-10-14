@@ -42,9 +42,15 @@ SOFTWARE.
 #include "usbd_cdc_if.h"
 //extern UART_HandleTypeDef huart3;
 
+/* Defines */
+#ifndef APP_RX_DATA_SIZE
+  #define APP_RX_DATA_SIZE 1000
+#endif
+
 /* Variables */
 #undef errno
 extern int32_t errno;
+extern uint8_t UserRxBufferFS[APP_RX_DATA_SIZE];
 
 uint8_t *__env[1] = { 0 };
 uint8_t **environ = __env;
@@ -83,10 +89,11 @@ int _write(int32_t file, uint8_t *ptr, int32_t len)
 	/* Implement your write code here, this is used by puts and printf for example */
 	/* return len; */
 	
-	CDC_Transmit_FS((uint8_t *)ptr, len);
+	if(CDC_Transmit_FS((uint8_t *)ptr, len) == USBD_OK)
+    return 0;
 	//HAL_UART_Transmit(&huart3, (uint8_t *)ptr, (uint16_t)len, 100);
 
-	errno = ENOSYS;
+	errno = EPROTO;
 	return -1;
 }
 
@@ -131,9 +138,14 @@ int _lseek(int32_t file, int32_t ptr, int32_t dir)
 	return -1;
 }
 
-int _read(int32_t file, uint8_t *ptr, int32_t len)
+int _read(int32_t file, uint8_t **ptr, int32_t len)
 {
-	errno = ENOSYS;
+	*ptr = &UserRxBufferFS[1];
+
+	if(*ptr != NULL)
+		return 0;
+
+	errno = ERANGE;
 	return -1;
 }
 

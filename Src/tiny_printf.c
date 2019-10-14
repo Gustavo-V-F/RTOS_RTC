@@ -55,6 +55,7 @@ SOFTWARE.
 #include <stdarg.h>
 #include <stdio.h>
 #include <string.h>
+#include <stdint.h>
 
 /* Create aliases for *printf to integer variants *iprintf */
 __attribute__ ((alias("iprintf"))) int printf(const char *fmt, ...);
@@ -158,7 +159,6 @@ int ts_formatstring(char *buf, const char *fmt, va_list va)
 
 	return (int)(buf - start_buf);
 }
-
 
 /**
 **---------------------------------------------------------------------------
