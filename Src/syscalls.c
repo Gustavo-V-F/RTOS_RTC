@@ -88,9 +88,9 @@ int _write(int32_t file, uint8_t *ptr, int32_t len)
 {
 	/* Implement your write code here, this is used by puts and printf for example */
 	/* return len; */
-	
+
 	if(CDC_Transmit_FS((uint8_t *)ptr, len) == USBD_OK)
-    return 0;
+    	return len;
 	//HAL_UART_Transmit(&huart3, (uint8_t *)ptr, (uint16_t)len, 100);
 
 	errno = EPROTO;
@@ -140,7 +140,7 @@ int _lseek(int32_t file, int32_t ptr, int32_t dir)
 
 int _read(int32_t file, uint8_t **ptr, int32_t len)
 {
-	*ptr = &UserRxBufferFS[1];
+	*ptr = &UserRxBufferFS[0];
 
 	if(*ptr != NULL)
 		return 0;
