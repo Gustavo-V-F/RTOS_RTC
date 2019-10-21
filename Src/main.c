@@ -63,6 +63,17 @@ const char *pcHelp[] = {
   "\r\nObs: military time format [245959] and",
   "\r\n date as follows [dd/mm/yyyy]."
 };
+
+const char *pcWeekday[] = {
+  "Sunday",
+  "Monday",
+  "Tuesday",
+  "Wednesday",
+  "Thursday",
+  "Friday",
+  "Saturday"
+};
+
 static char pcCmd[5], pcArg_cmd[5], pcArg_time_or_date[7], pcArg_month[3], pcArg_year[5];
 static unsigned int ulYear_upper = 20;
 /* USER CODE END PV */
@@ -307,7 +318,6 @@ void vRTC_options_task(void const * argument)
   /* Infinite loop */
   for(;;)
   {
-
   }
   /* USER CODE END 5 */ 
 }
@@ -382,7 +392,7 @@ void vStdio_gatekeeper_task(void const * argument)
             Current_date.Month = 1;
 
           HAL_RTC_SetDate(&hrtc, &Current_date, RTC_FORMAT_BIN);
-          printf("\r\nThe current date is %u/%u/%u%u.", Current_date.Date, Current_date.Month, ulYear_upper, Current_date.Year);
+          printf("\r\nThe current date is %s, %u/%u/%u%u.", pcWeekday[Current_date.WeekDay],Current_date.Date, Current_date.Month, ulYear_upper, Current_date.Year);
         }
 
       }else if(strcmp(pcCmd, "show") == 0)
@@ -394,7 +404,7 @@ void vStdio_gatekeeper_task(void const * argument)
         }else if(strcmp(pcArg_cmd, "date") == 0)
         {
           HAL_RTC_GetDate(&hrtc, &Current_date, RTC_FORMAT_BIN);
-          printf("\r\nThe current date is %u/%u/%u%u.", Current_date.Date, Current_date.Month, ulYear_upper, Current_date.Year);
+          printf("\r\nThe current date is %s, %u/%u/%u%u.", pcWeekday[Current_date.WeekDay], Current_date.Date, Current_date.Month, ulYear_upper, Current_date.Year);
         }
 
       }else
@@ -405,6 +415,7 @@ void vStdio_gatekeeper_task(void const * argument)
           printf(pcHelp[ulHelp_counter]);
         }
       }
+
       osThreadSetPriority(Gatekeeper_handle, osPriorityLow); 
     }
   }
