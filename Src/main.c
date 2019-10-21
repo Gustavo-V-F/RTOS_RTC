@@ -47,7 +47,6 @@
 /* Private variables ---------------------------------------------------------*/
 RTC_HandleTypeDef hrtc;
 
-osThreadId RTC_options_handle;
 osThreadId Handle_handle;
 osThreadId Gatekeeper_handle;
 osSemaphoreId xRx_semaphore_handle;
@@ -82,7 +81,6 @@ static unsigned int ulYear_upper = 20;
 void SystemClock_Config(void);
 static void MX_GPIO_Init(void);
 static void MX_RTC_Init(void);
-void vRTC_options_task(void const * argument);
 void vRx_handle_task(void const * argument);
 void vStdio_gatekeeper_task(void const * argument);
 
@@ -152,10 +150,6 @@ int main(void)
   /* USER CODE END RTOS_QUEUES */
 
   /* Create the thread(s) */
-  /* definition and creation of RTC_options */
-  osThreadDef(RTC_options, vRTC_options_task, osPriorityBelowNormal, 0, 150);
-  RTC_options_handle = osThreadCreate(osThread(RTC_options), NULL);
-
   /* definition and creation of Handle */
   osThreadDef(Handle, vRx_handle_task, osPriorityHigh, 0, 64);
   Handle_handle = osThreadCreate(osThread(Handle), NULL);
@@ -305,23 +299,6 @@ static void MX_GPIO_Init(void)
 
 /* USER CODE END 4 */
 
-/* USER CODE BEGIN Header_vRTC_options_task */
-/**
-  * @brief  Function implementing the RTC_options thread.
-  * @param  argument: Not used 
-  * @retval None
-  */
-/* USER CODE END Header_vRTC_options_task */
-void vRTC_options_task(void const * argument)
-{
-  /* USER CODE BEGIN 5 */
-  /* Infinite loop */
-  for(;;)
-  {
-  }
-  /* USER CODE END 5 */ 
-}
-
 /* USER CODE BEGIN Header_vRx_handle_task */
 /**
 * @brief Function implementing the Handle thread.
@@ -393,7 +370,8 @@ void vStdio_gatekeeper_task(void const * argument)
 
           HAL_RTC_SetDate(&hrtc, &Current_date, RTC_FORMAT_BIN);
           printf("\r\nThe current date is %s, %u/%u/%u%u.", pcWeekday[Current_date.WeekDay],Current_date.Date, Current_date.Month, ulYear_upper, Current_date.Year);
-        }
+        }else
+          printf(pcHelp[1]);
 
       }else if(strcmp(pcCmd, "show") == 0)
       {
@@ -405,7 +383,9 @@ void vStdio_gatekeeper_task(void const * argument)
         {
           HAL_RTC_GetDate(&hrtc, &Current_date, RTC_FORMAT_BIN);
           printf("\r\nThe current date is %s, %u/%u/%u%u.", pcWeekday[Current_date.WeekDay], Current_date.Date, Current_date.Month, ulYear_upper, Current_date.Year);
-        }
+        }else
+          printf(pcHelp[3]);
+        
 
       }else
       {
