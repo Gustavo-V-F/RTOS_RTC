@@ -104,8 +104,6 @@ extern USBD_CDC_ItfTypeDef USBD_Interface_fops_FS;
   */
 
 uint8_t CDC_Transmit_FS(uint8_t* Buf, uint16_t Len);
-void CDC_Clear_Rx_Flag(void);
-uint32_t CDC_Get_Rx_Flag(void);
 
 /* USER CODE BEGIN EXPORTED_FUNCTIONS */
 

@@ -23,7 +23,7 @@
 #include "usbd_cdc_if.h"
 
 /* USER CODE BEGIN INCLUDE */
-
+#include "cmsis_os.h"
 /* USER CODE END INCLUDE */
 
 /* Private typedef -----------------------------------------------------------*/
@@ -32,7 +32,7 @@
 
 /* USER CODE BEGIN PV */
 /* Private variables ---------------------------------------------------------*/
-static uint32_t ulUSBD_received_flag;
+extern osSemaphoreId xRx_semaphore_handle;
 /* USER CODE END PV */
 
 /** @addtogroup STM32_USB_OTG_DEVICE_LIBRARY
@@ -68,7 +68,7 @@ static uint32_t ulUSBD_received_flag;
 #define APP_RX_DATA_SIZE  1000
 #define APP_TX_DATA_SIZE  1000
 #define START_OF_TEXT 0x02
-#undef DEBUG
+#define DEBUG
 /* USER CODE END PRIVATE_DEFINES */
 
 /**
@@ -134,7 +134,7 @@ static int8_t CDC_Control_FS(uint8_t cmd, uint8_t* pbuf, uint16_t length);
 static int8_t CDC_Receive_FS(uint8_t* pbuf, uint32_t *Len);
 
 /* USER CODE BEGIN PRIVATE_FUNCTIONS_DECLARATION */
-static void CDC_Set_Rx_Flag(void);
+
 /* USER CODE END PRIVATE_FUNCTIONS_DECLARATION */
 
 /**
@@ -265,52 +265,25 @@ static int8_t CDC_Control_FS(uint8_t cmd, uint8_t* pbuf, uint16_t length)
 static int8_t CDC_Receive_FS(uint8_t* Buf, uint32_t *Len)
 {
   /* USER CODE BEGIN 6 */
-
-  static uint32_t ulBuffer_lenght = 1;
-  ulUSBD_received_flag = 0;
+  static uint8_t cFirst_value;
+  static uint32_t ulLenght = 0;
 
   USBD_CDC_SetRxBuffer(&hUsbDeviceFS, &Buf[0]);
   USBD_CDC_ReceivePacket(&hUsbDeviceFS);
 
-  if(*Len > 1)
+  if(ulLenght == 0)
+    cFirst_value = *Buf;
+  else
+    *(Buf+ulLenght) = *Buf;
+
+  if((*Buf == '\n') || (ulLenght == 999))
   {
-    #ifdef DEBUG
-      printf("\r\nWarning: input only supports characters!\r\n\tInput data will be discarded.", (APP_RX_DATA_SIZE-2));    
-    #endif
-    Buf[0] = '\0';
-  }
-  else if(ulBuffer_lenght == APP_RX_DATA_SIZE)
-  {
-    #ifdef DEBUG
-      printf("\r\nWarning: input over %u bytes not supported!\r\n\tInput data will be truncated.", (APP_RX_DATA_SIZE-2));    
-    #endif
-    ulBuffer_lenght = 999;
-    Buf[ulBuffer_lenght] = '\0';
+    *Buf = cFirst_value;
+    *(Buf+ulLenght) = '\0';
+    ulLenght = 0;
+    osSemaphoreRelease(xRx_semaphore_handle);
   }else
-  {
-    if((Buf[0] != '\n') || ((Buf[0] == '\n') && (Buf[ulBuffer_lenght-1] == '\\')))
-    {
-      if(*Len == 1)
-        Buf[ulBuffer_lenght] = Buf[0];
-    } 
-    
-    if((Buf[0] == '\n') && (Buf[ulBuffer_lenght-1] != '\\'))
-    {
-      #ifdef DEBUG
-        Buf[ulBuffer_lenght] = '\0';
-        printf("\r\n%u\t%s", (unsigned) ulBuffer_lenght, (char *) &Buf[1]);
-      #endif
-      Buf[0] = START_OF_TEXT;
-      Buf[ulBuffer_lenght] = '\0';
-      ulBuffer_lenght = 1-*Len;
-      CDC_Set_Rx_Flag();
-    }
-    
-    if(*Len == 1)
-    {
-      ulBuffer_lenght += *Len;
-    }
-  }
+    ulLenght++;
 
   return (USBD_OK);
   /* USER CODE END 6 */
@@ -342,20 +315,6 @@ uint8_t CDC_Transmit_FS(uint8_t* Buf, uint16_t Len)
 }
 
 /* USER CODE BEGIN PRIVATE_FUNCTIONS_IMPLEMENTATION */
-void CDC_Clear_Rx_Flag(void)
-{
-  ulUSBD_received_flag = 0;
-}
-
-void CDC_Set_Rx_Flag(void)
-{
-  ulUSBD_received_flag = 1;
-}
-
-uint32_t CDC_Get_Rx_Flag(void)
-{
-  return ulUSBD_received_flag;
-}
 
 /* USER CODE END PRIVATE_FUNCTIONS_IMPLEMENTATION */
 
