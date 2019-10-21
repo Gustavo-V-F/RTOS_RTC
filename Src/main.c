@@ -26,6 +26,7 @@
 /* Private includes ----------------------------------------------------------*/
 /* USER CODE BEGIN Includes */
 #include <stdio.h>
+#include <string.h>
 /* USER CODE END Includes */
 
 /* Private typedef -----------------------------------------------------------*/
@@ -51,7 +52,19 @@ osThreadId Handle_handle;
 osThreadId Gatekeeper_handle;
 osSemaphoreId xRx_semaphore_handle;
 /* USER CODE BEGIN PV */
-
+const char *pcHelp[] = {
+  "\r\n\r\nRTC program commands:",
+  "\r\n\tset [time | date] [TIME | DATE]:",
+  "\r\n\t\tSet current RTC time or date.",
+  "\r\n\tshow [time | date]:",
+  "\r\n\t\tShow the current RTC time or date.",
+  "\r\n\thelp:",
+  "\r\n\t\tShow this help."
+  "\r\nObs: military time format [245959] and",
+  "\r\n date as follows [dd/mm/yyyy]."
+};
+static char pcCmd[5], pcArg_cmd[5], pcArg_time_or_date[7], pcArg_month[3], pcArg_year[5];
+static unsigned int ulYear_upper = 20;
 /* USER CODE END PV */
 
 /* Private function prototypes -----------------------------------------------*/
@@ -129,15 +142,15 @@ int main(void)
 
   /* Create the thread(s) */
   /* definition and creation of RTC_options */
-  osThreadDef(RTC_options, vRTC_options_task, osPriorityBelowNormal, 0, 80);
+  osThreadDef(RTC_options, vRTC_options_task, osPriorityBelowNormal, 0, 150);
   RTC_options_handle = osThreadCreate(osThread(RTC_options), NULL);
 
   /* definition and creation of Handle */
-  osThreadDef(Handle, vRx_handle_task, osPriorityAboveNormal, 0, 64);
+  osThreadDef(Handle, vRx_handle_task, osPriorityHigh, 0, 64);
   Handle_handle = osThreadCreate(osThread(Handle), NULL);
   
   /* definition and creation of Gatekeeper */
-  osThreadDef(Gatekeeper, vStdio_gatekeeper_task, osPriorityHigh, 0, 150);
+  osThreadDef(Gatekeeper, vStdio_gatekeeper_task, osPriorityLow, 0, 150);
   Gatekeeper_handle = osThreadCreate(osThread(Gatekeeper), NULL);
 
   /* USER CODE BEGIN RTOS_THREADS */
@@ -294,7 +307,7 @@ void vRTC_options_task(void const * argument)
   /* Infinite loop */
   for(;;)
   {
-    osDelay(1);
+
   }
   /* USER CODE END 5 */ 
 }
@@ -312,7 +325,9 @@ void vRx_handle_task(void const * argument)
   /* Infinite loop */
   for(;;)
   {
-    osDelay(1);
+    osSemaphoreWait(xRx_semaphore_handle, osWaitForever);
+
+    osThreadSetPriority(Gatekeeper_handle, osPriorityNormal);
   }
   /* USER CODE END vRx_handle_task */
 }
@@ -328,12 +343,70 @@ void vStdio_gatekeeper_task(void const * argument)
 {
   /* USER CODE BEGIN vStdio_gatekeeper_task */
   /* Infinite loop */
-  static char Teste[12];
+  uint32_t ulHelp_counter;
+  RTC_TimeTypeDef sCurrent_time;
+  RTC_DateTypeDef Current_date;
   for(;;)
   {
-    osSemaphoreWait(xRx_semaphore_handle, osWaitForever);
-    scanf("%*[ ]%11s %*[ ]", Teste);
-    printf("\r\n%s", Teste);
+    if(osThreadGetPriority(Gatekeeper_handle) == osPriorityNormal)
+    {
+      scanf("%*[ ]%4s %*[ ]%4s %*[ ]%6s/%2s/%4s", pcCmd, pcArg_cmd, pcArg_time_or_date, pcArg_month, pcArg_year);
+      
+      if(strcmp(pcCmd, "set") == 0)
+      {
+        if(strcmp(pcArg_cmd, "time") == 0)
+        {
+          sCurrent_time.Hours = (pcArg_time_or_date[0] - '0') * 10 + (pcArg_time_or_date[1] - '0');
+          sCurrent_time.Minutes = (pcArg_time_or_date[2] - '0') * 10 + (pcArg_time_or_date[3] - '0');
+          sCurrent_time.Seconds = (pcArg_time_or_date[4] - '0') * 10 + (pcArg_time_or_date[5] - '0');
+          
+          if(sCurrent_time.Hours > 24)
+            sCurrent_time.Hours = 0;
+          if(sCurrent_time.Minutes > 59)
+            sCurrent_time.Minutes = 0;
+          if(sCurrent_time.Seconds > 59)
+            sCurrent_time.Seconds = 0;
+
+          HAL_RTC_SetTime(&hrtc, &sCurrent_time, RTC_FORMAT_BIN);
+          printf("\r\nThe current time is %u:%u:%u.", sCurrent_time.Hours, sCurrent_time.Minutes, sCurrent_time.Seconds);
+        }else if(strcmp(pcArg_cmd, "date") == 0)
+        {
+          Current_date.Date = (pcArg_time_or_date[0] - '0') * 10 + (pcArg_time_or_date[1] - '0');
+          Current_date.Month = (pcArg_month[0] - '0') * 10 + (pcArg_month[1] - '0');
+          ulYear_upper = (pcArg_year[0] - '0') * 10 + (pcArg_year[1] - '0');
+          Current_date.Year = (pcArg_year[2] - '0') * 10 + (pcArg_year[3] - '0');
+
+          if((Current_date.Date == 0) || (Current_date.Date > 31))
+            Current_date.Date = 1;
+          if((Current_date.Month == 0) || (Current_date.Month > 12))
+            Current_date.Month = 1;
+
+          HAL_RTC_SetDate(&hrtc, &Current_date, RTC_FORMAT_BIN);
+          printf("\r\nThe current date is %u/%u/%u%u.", Current_date.Date, Current_date.Month, ulYear_upper, Current_date.Year);
+        }
+
+      }else if(strcmp(pcCmd, "show") == 0)
+      {
+        if(strcmp(pcArg_cmd, "time") == 0)
+        {
+          HAL_RTC_GetTime(&hrtc, &sCurrent_time, RTC_FORMAT_BIN);
+          printf("\r\nThe current time is %u:%u:%u.", sCurrent_time.Hours, sCurrent_time.Minutes, sCurrent_time.Seconds);
+        }else if(strcmp(pcArg_cmd, "date") == 0)
+        {
+          HAL_RTC_GetDate(&hrtc, &Current_date, RTC_FORMAT_BIN);
+          printf("\r\nThe current date is %u/%u/%u%u.", Current_date.Date, Current_date.Month, ulYear_upper, Current_date.Year);
+        }
+
+      }else
+      {
+        for(ulHelp_counter = 0; ulHelp_counter < 8; ulHelp_counter++)
+        {
+          HAL_Delay(1);
+          printf(pcHelp[ulHelp_counter]);
+        }
+      }
+      osThreadSetPriority(Gatekeeper_handle, osPriorityLow); 
+    }
   }
   /* USER CODE END vStdio_gatekeeper_task */
 }
