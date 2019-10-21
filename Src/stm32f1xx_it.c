@@ -26,7 +26,6 @@
 /* Private includes ----------------------------------------------------------*/
 /* USER CODE BEGIN Includes */
 #include "cmsis_os.h"
-#include "usbd_cdc_if.h"
 /* USER CODE END Includes */
 
 /* Private typedef -----------------------------------------------------------*/
@@ -62,7 +61,6 @@
 /* External variables --------------------------------------------------------*/
 extern PCD_HandleTypeDef hpcd_USB_FS;
 extern TIM_HandleTypeDef htim4;
-extern osSemaphoreId xRx_semaphore_handle;
 
 /* USER CODE BEGIN EV */
 /* USER CODE END EV */
@@ -174,12 +172,6 @@ void USB_LP_CAN1_RX0_IRQHandler(void)
   HAL_PCD_IRQHandler(&hpcd_USB_FS);
   /* USER CODE BEGIN USB_LP_CAN1_RX0_IRQn 1 */
   
-  if(CDC_Get_Rx_Flag() == 1)
-  {
-    osSemaphoreRelease(xRx_semaphore_handle);
-    CDC_Clear_Rx_Flag();
-  }
-
   /* USER CODE END USB_LP_CAN1_RX0_IRQn 1 */
 }
 
