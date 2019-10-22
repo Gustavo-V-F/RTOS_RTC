@@ -15,6 +15,9 @@ Abstract: Minimal iscanf/siscanf.
           The following conversion specifiers are supported
           cdi[1...2^32-1]suxX%
 
+		  The following regex are also supported
+		  *[c]
+
           Usage:
           c    			character
           d,i  			signed integer (-sign added, + sign not supported)
@@ -23,6 +26,7 @@ Abstract: Minimal iscanf/siscanf.
           u    			unsigned integer as decimal
           x,X  			unsigned integer as hexadecimal (uppercase letter)
           %    			% is written (conversion specification is '%%')
+		  *[c]			ignores character until another is read.
 
           Note:
           Character padding is not supported
