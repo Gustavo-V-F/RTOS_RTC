@@ -355,7 +355,8 @@ void vStdio_gatekeeper_task(void const * argument)
             sCurrent_time.Seconds = 0;
 
           HAL_RTC_SetTime(&hrtc, &sCurrent_time, RTC_FORMAT_BIN);
-          printf("\r\nThe current time is %u:%u:%u.", sCurrent_time.Hours, sCurrent_time.Minutes, sCurrent_time.Seconds);
+          HAL_RTC_GetTime(&hrtc, &sCurrent_time, RTC_FORMAT_BCD);
+          printf("\r\nThe current time is %u%u:%u%u:%u%u.", (sCurrent_time.Hours >> 4), (sCurrent_time.Hours & 0x0F), (sCurrent_time.Minutes >> 4), sCurrent_time.Seconds);
         }else if(strcmp(pcArg_cmd, "date") == 0)
         {
           Current_date.Date = (pcArg_time_or_date[0] - '0') * 10 + (pcArg_time_or_date[1] - '0');
