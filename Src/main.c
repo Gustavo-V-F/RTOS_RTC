@@ -338,9 +338,9 @@ void vStdio_gatekeeper_task(void const * argument)
     {
       scanf("%*[ ]%4s %*[ ]%4s %*[ ]%6s/%2s/%2s", pcCmd, pcArg_cmd, pcArg_time_or_date, pcArg_month, pcArg_year);
       
-      if(strcmp(pcCmd, "set") == 0)
+      if(!strcmp(pcCmd, "set"))
       {
-        if(strcmp(pcArg_cmd, "time") == 0)
+        if(!strcmp(pcArg_cmd, "time"))
         {
           sCurrent_time.Hours = (pcArg_time_or_date[0] - '0') * 10 + (pcArg_time_or_date[1] - '0');
           sCurrent_time.Minutes = (pcArg_time_or_date[2] - '0') * 10 + (pcArg_time_or_date[3] - '0');
@@ -357,7 +357,7 @@ void vStdio_gatekeeper_task(void const * argument)
           HAL_RTC_GetTime(&hrtc, &sCurrent_time, RTC_FORMAT_BCD);
           printf("\r\nThe current time is %u%u:%u%u:%u%u.", (sCurrent_time.Hours >> 4), (sCurrent_time.Hours & 0x0F), \
           (sCurrent_time.Minutes >> 4), (sCurrent_time.Minutes & 0x0F), (sCurrent_time.Seconds >> 4), (sCurrent_time.Seconds & 0x0F));
-        }else if(strcmp(pcArg_cmd, "date") == 0)
+        }else if(!strcmp(pcArg_cmd, "date"))
         {
           Current_date.Date = (pcArg_time_or_date[0] - '0') * 10 + (pcArg_time_or_date[1] - '0');
           Current_date.Month = (pcArg_month[0] - '0') * 10 + (pcArg_month[1] - '0');
@@ -376,9 +376,9 @@ void vStdio_gatekeeper_task(void const * argument)
         }else
           printf(pcHelp[1]);
 
-      }else if(strcmp(pcCmd, "show") == 0)
+      }else if(!strcmp(pcCmd, "show"))
       {
-        if(strcmp(pcArg_cmd, "time") == 0)
+        if(!strcmp(pcArg_cmd, "time"))
         {
           HAL_RTC_GetTime(&hrtc, &sCurrent_time, RTC_FORMAT_BCD);
           printf("\r\nThe current time is %u%u:%u%u:%u%u.", (sCurrent_time.Hours >> 4), (sCurrent_time.Hours & 0x0F), \
