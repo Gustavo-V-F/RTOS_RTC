@@ -60,7 +60,7 @@ const char *pcHelp[] = {
   "\r\n\thelp:",
   "\r\n\t\tShow this help."
   "\r\nObs: military time format [245959] and",
-  "\r\n date as follows [dd/mm/yyyy]."
+  "\r\n date as follows [dd/mm/yy]."
 };
 
 const char *pcWeekday[] = {
@@ -73,8 +73,7 @@ const char *pcWeekday[] = {
   "Saturday"
 };
 
-static char pcCmd[5], pcArg_cmd[5], pcArg_time_or_date[7], pcArg_month[3], pcArg_year[5];
-static unsigned int ulYear_upper = 20;
+static char pcCmd[5], pcArg_cmd[5], pcArg_time_or_date[7], pcArg_month[3], pcArg_year[3];
 /* USER CODE END PV */
 
 /* Private function prototypes -----------------------------------------------*/
@@ -337,7 +336,7 @@ void vStdio_gatekeeper_task(void const * argument)
   {
     if(osThreadGetPriority(Gatekeeper_handle) == osPriorityNormal)
     {
-      scanf("%*[ ]%4s %*[ ]%4s %*[ ]%6s/%2s/%4s", pcCmd, pcArg_cmd, pcArg_time_or_date, pcArg_month, pcArg_year);
+      scanf("%*[ ]%4s %*[ ]%4s %*[ ]%6s/%2s/%2s", pcCmd, pcArg_cmd, pcArg_time_or_date, pcArg_month, pcArg_year);
       
       if(strcmp(pcCmd, "set") == 0)
       {
@@ -356,13 +355,13 @@ void vStdio_gatekeeper_task(void const * argument)
 
           HAL_RTC_SetTime(&hrtc, &sCurrent_time, RTC_FORMAT_BIN);
           HAL_RTC_GetTime(&hrtc, &sCurrent_time, RTC_FORMAT_BCD);
-          printf("\r\nThe current time is %u%u:%u%u:%u%u.", (sCurrent_time.Hours >> 4), (sCurrent_time.Hours & 0x0F), (sCurrent_time.Minutes >> 4), sCurrent_time.Seconds);
+          printf("\r\nThe current time is %u%u:%u%u:%u%u.", (sCurrent_time.Hours >> 4), (sCurrent_time.Hours & 0x0F), \
+          (sCurrent_time.Minutes >> 4), (sCurrent_time.Minutes & 0x0F), (sCurrent_time.Seconds >> 4), (sCurrent_time.Seconds & 0x0F));
         }else if(strcmp(pcArg_cmd, "date") == 0)
         {
           Current_date.Date = (pcArg_time_or_date[0] - '0') * 10 + (pcArg_time_or_date[1] - '0');
           Current_date.Month = (pcArg_month[0] - '0') * 10 + (pcArg_month[1] - '0');
-          ulYear_upper = (pcArg_year[0] - '0') * 10 + (pcArg_year[1] - '0');
-          Current_date.Year = (pcArg_year[2] - '0') * 10 + (pcArg_year[3] - '0');
+          Current_date.Year = (pcArg_year[0] - '0') * 10 + (pcArg_year[1] - '0');
 
           if((Current_date.Date == 0) || (Current_date.Date > 31))
             Current_date.Date = 1;
@@ -370,7 +369,10 @@ void vStdio_gatekeeper_task(void const * argument)
             Current_date.Month = 1;
 
           HAL_RTC_SetDate(&hrtc, &Current_date, RTC_FORMAT_BIN);
-          printf("\r\nThe current date is %s, %u/%u/%u%u.", pcWeekday[Current_date.WeekDay],Current_date.Date, Current_date.Month, ulYear_upper, Current_date.Year);
+          HAL_RTC_GetDate(&hrtc, &Current_date, RTC_FORMAT_BCD);
+          printf("\r\nThe current date is %s, %u%u/%u%u/%u%u.", pcWeekday[((Current_date.WeekDay >> 4) + (Current_date.WeekDay & 0x0F))], \
+          (Current_date.Date >> 4), (Current_date.Date & 0x0F), (Current_date.Month >> 4), (Current_date.Month & 0x0F), \
+          (Current_date.Year >> 4), (Current_date.Year & 0x0F));
         }else
           printf(pcHelp[1]);
 
@@ -378,12 +380,15 @@ void vStdio_gatekeeper_task(void const * argument)
       {
         if(strcmp(pcArg_cmd, "time") == 0)
         {
-          HAL_RTC_GetTime(&hrtc, &sCurrent_time, RTC_FORMAT_BIN);
-          printf("\r\nThe current time is %u:%u:%u.", sCurrent_time.Hours, sCurrent_time.Minutes, sCurrent_time.Seconds);
+          HAL_RTC_GetTime(&hrtc, &sCurrent_time, RTC_FORMAT_BCD);
+          printf("\r\nThe current time is %u%u:%u%u:%u%u.", (sCurrent_time.Hours >> 4), (sCurrent_time.Hours & 0x0F), \
+          (sCurrent_time.Minutes >> 4), (sCurrent_time.Minutes & 0x0F), (sCurrent_time.Seconds >> 4), (sCurrent_time.Seconds & 0x0F));
         }else if(strcmp(pcArg_cmd, "date") == 0)
         {
-          HAL_RTC_GetDate(&hrtc, &Current_date, RTC_FORMAT_BIN);
-          printf("\r\nThe current date is %s, %u/%u/%u%u.", pcWeekday[Current_date.WeekDay], Current_date.Date, Current_date.Month, ulYear_upper, Current_date.Year);
+          HAL_RTC_GetDate(&hrtc, &Current_date, RTC_FORMAT_BCD);
+          printf("\r\nThe current date is %s, %u%u/%u%u/%u%u.", pcWeekday[((Current_date.WeekDay >> 4) + (Current_date.WeekDay & 0x0F))], \
+          (Current_date.Date >> 4), (Current_date.Date & 0x0F), (Current_date.Month >> 4), (Current_date.Month & 0x0F), \
+          (Current_date.Year >> 4), (Current_date.Year & 0x0F));
         }else
           printf(pcHelp[3]);
         
