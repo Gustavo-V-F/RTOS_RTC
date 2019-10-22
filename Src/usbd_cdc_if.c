@@ -67,8 +67,6 @@ extern osSemaphoreId xRx_semaphore_handle;
 /* It's up to user to redefine and/or remove those define */
 #define APP_RX_DATA_SIZE  1000
 #define APP_TX_DATA_SIZE  1000
-#define START_OF_TEXT 0x02
-#define DEBUG
 /* USER CODE END PRIVATE_DEFINES */
 
 /**
